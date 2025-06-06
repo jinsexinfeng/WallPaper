@@ -1,7 +1,7 @@
 # Windows电脑壁纸
 使用Python脚本自动设置Windows电脑壁纸和锁屏壁纸。
 
-感谢时光壁纸提供API：[timeline.ink](https://timeline.ink/)
+感谢`拾光壁纸`提供API：[timeline.ink](https://timeline.ink/)
 
 ## 使用方法
 1. 安装Python3
