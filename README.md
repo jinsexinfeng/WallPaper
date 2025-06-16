@@ -14,6 +14,7 @@
     pip install requests pywin32
     ```
 3. 修改`main.py`中的`main`函数，设置下载文件夹和图源 ID
+> https://doc.timeline.ink/#/api-image?id=%E5%9B%BE%E6%BA%90-id
 4. 自行修改`main.py`中的`main`函数，可以选择设置`桌面壁纸`或`锁屏壁纸`
 ```python
 # 开启
