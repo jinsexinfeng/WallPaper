@@ -6,7 +6,23 @@ import json
 import requests
 import win32gui, win32con, win32api
 import subprocess
+import datetime
 
+def log(img, logPath=""):
+    # 获取当前时间
+    now = datetime.datetime.now()
+    if logPath == "":
+        logPath = os.path.join(sys.path[0], "logs.csv")
+    # 格式化时间
+    time_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    # 打开文件
+    if not os.path.exists(logPath):
+        with open(logPath, "w", encoding="utf-8") as f:
+            # 写入表头
+            f.write("时间,图片路径,桌面,锁屏\n")
+    with open(logPath, "a", encoding="utf-8") as f:
+        # 写入日志
+        f.write(f"{time_str},{img[0]},{img[1]},{img[2]}\n")
 
 # 获取图片
 def getImage(downloadFolder, provider):
@@ -30,7 +46,7 @@ def getImage(downloadFolder, provider):
         print("图片URL为:%s" % imgURL)
     else:
         print("请求失败，请检查网络连接")
-        return None
+        return -1
 
     # 打印正在下载的图片URL
     print("正在为您下载图片...")
@@ -53,14 +69,19 @@ def getImage(downloadFolder, provider):
 def setWallpaper(filePath):
     # 参考https://github.com/qinyuanpei/WallPaper/
     print("正在设置桌面壁纸...")
-    key = win32api.RegOpenKeyEx(
-        win32con.HKEY_CURRENT_USER, "Control Panel\\Desktop", 0, win32con.KEY_SET_VALUE
-    )
-    # 设置壁纸风格 (1 = 居中, 2 = 拉伸, 6 = 适应, 10 = 填充)
-    win32api.RegSetValueEx(key, "WallpaperStyle", 0, win32con.REG_SZ, "10")
-    win32api.RegSetValueEx(key, "TileWallpaper", 0, win32con.REG_SZ, "0")
-    win32gui.SystemParametersInfo(win32con.SPI_SETDESKWALLPAPER, filePath, 1 + 2)
-    print("成功应用图片:%s为桌面壁纸" % filePath)
+    try:
+        key = win32api.RegOpenKeyEx(
+            win32con.HKEY_CURRENT_USER, "Control Panel\\Desktop", 0, win32con.KEY_SET_VALUE
+        )
+        # 设置壁纸风格 (1 = 居中, 2 = 拉伸, 6 = 适应, 10 = 填充)
+        win32api.RegSetValueEx(key, "WallpaperStyle", 0, win32con.REG_SZ, "10")
+        win32api.RegSetValueEx(key, "TileWallpaper", 0, win32con.REG_SZ, "0")
+        win32gui.SystemParametersInfo(win32con.SPI_SETDESKWALLPAPER, filePath, 1 + 2)
+        print("成功应用图片:%s为桌面壁纸" % filePath)
+    except Exception as e:
+        print("设置壁纸失败:%s" % e)
+        return -1
+    return 0
 
 
 # 设置锁屏壁纸
@@ -72,16 +93,20 @@ def set_lock_screen_wallpaper(filePath):
     igcmdWin10Path = os.path.join(sys.path[0], "igcmdWin10.exe")
     if not os.path.exists(igcmdWin10Path):
         print("igcmdWin10.exe不存在，请先下载")
-        return
-    subprocess.run(
-        f"{igcmdWin10Path} setlockimage {os.path.abspath(filePath)}",
-        shell=True,
-        check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    print("成功应用图片:%s为锁屏壁纸" % filePath)
-
+        return -1
+    try:
+        subprocess.run(
+            f"{igcmdWin10Path} setlockimage {os.path.abspath(filePath)}",
+            shell=True,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        print("成功应用图片:%s为锁屏壁纸" % filePath)
+    except Exception as e:
+        print("设置壁纸失败:%s" % e)
+        return -1
+    return 0
 
 # 主程序入口
 def main():
@@ -96,11 +121,15 @@ def main():
     # 获取图片文件
     imageFile = getImage(downloadFolder, provider)
     # 如果图片文件存在，则设置壁纸
-    if imageFile != None:
+    if imageFile != -1:
         # 设置壁纸
-        setWallpaper(imageFile)
+        sW = setWallpaper(imageFile)
         # 设置锁屏壁纸
-        set_lock_screen_wallpaper(imageFile)
+        sL = set_lock_screen_wallpaper(imageFile)
+    
+    log((imageFile, sW, sL))
+    
+
 
 
 if __name__ == "__main__":
